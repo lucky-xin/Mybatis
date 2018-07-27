@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mybatis.mapper.OrdersCustomMapper">
+	<!-- type要映射的类型 -->
+	<resultMap type="com.ssm.po.Orders" id="OrdersUserMap">
+		<!-- id:指定映射中的唯一标示，订单信息唯一标示如果有多个id则配置多个id -->
+		<id column="id" property="id" />
+		<result column="user_id" property="userId" />
+		<result column="num" property="num" />
+		<result column="note" property="note" />
+		<result column="createtime" property="createtime" />
+		<result column="address" property="address" />
+
+		<!-- association:用于映射关联查询的对个对象的信息 property:将要关联查询的用户信息映射到Orders中哪个类属性 -->
+		<association property="user" javaType="com.ssm.po.User">
+			<id column="user_id" property="id" />
+			<result column="name" property="name" />
+			<result column="address" property="address" />
+			<result column="email" property="email" />
+			<result column="sex" property="sex" />
+		</association>
+	</resultMap>
+
+	<resultMap type="com.ssm.po.Orders" id="OrdersAndOrderdetailResultMap" extends="OrdersUserMap">
+		<!--订单明细 -->
+		<collection property="orderdetails" ofType="com.ssm.po.Orderdetail">
+			<id column="orderdetail_id" property="id" />
+			<result column="items_id" property="itemsId" />
+			<result column="orders_id" property="ordersId" />
+			<result column="item_num" property="itemsNum" />
+		</collection>
+	</resultMap>
+
+	<resultMap type="User" id="UserAndItemsResultMap">
+		<!--用户信息 -->
+		<id column="user_id" property="id" />
+		<result column="name" property="name" />
+		<result column="address" property="address" />
+		<result column="email" property="email" />
+		<result column="sex" property="sex" />
+		<!-- 一个用户对应多个订单 -->
+		<collection property="ordersList" ofType="com.ssm.po.Orders">
+			<id column="id" property="id" />
+			<result column="user_id" property="userId" />
+			<result column="num" property="num" />
+			<result column="note" property="note" />
+			<result column="createtime" property="createtime" />
+			<result column="address" property="address" />
+			<!-- 订单明细 -->
+			<collection property="orderdetails" ofType="com.ssm.po.Orderdetail">
+				<id column="orderdetail_id" property="id" />
+				<result column="items_id" property="itemsId" />
+				<result column="orders_id" property="ordersId" />
+				<result column="item_num" property="itemsNum" />
+
+				<association property="items" javaType="com.ssm.po.Items">
+					<id column="items_id" property="id" />
+					<result column="items_name" property="name" />
+					<result column="items_detail" property="detail" />
+					<result column="items_price" property="price" />
+				</association>
+
+			</collection>
+		</collection>
+	</resultMap>
+
+	<!-- 延时加载 -->
+	<resultMap type="Orders" id="OrdresUserLazyLoading">
+		<id column="id" property="id" />
+		<result column="user_id" property="userId" />
+		<result column="num" property="num" />
+		<result column="note" property="note" />
+		<result column="createtime" property="createtime" />
+		<result column="address" property="address" />
+		<!--SELECT orders.*, (select name from user_info where orders.user_id=user_info.id) name from ordres -->
+		<association property="user" javaType="User" select="com.mybatis.mapper.UserMapper.findUserById" column="user_id">
+
+		</association>
+
+	</resultMap>
+
+	<select id="findOrdersUser" resultType="com.ssm.po.OrdersCustom">
+		SELECT user_info.name,user_info.address,user_info.email,
+		user_info.sex from orders,user_info
+		where orders.user_id=user_info.id group by orders.user_id
+	</select>
+
+	<select id="findOrdersAndOrderdetailResultMap" resultMap="OrdersAndOrderdetailResultMap">
+		SELECT orders.*,
+		user_info.name,
+		user_info.address,
+		user_info.email,
+		user_info.sex,
+		orderdetail.items_id,
+		orderdetail.orders_id,
+		orderdetail.id as orderdetail_id,
+		orderdetail.item_num
+		from orders,user_info,orderdetail
+		where orders.user_id=user_info.id and orders.id=orderdetail.orders_id
+	</select>
+
+	<select id="findOrdersUserResultMap" resultMap="OrdersUserMap">
+		SELECT orders.*,
+		user_info.name,user_info.address,user_info.email,
+		user_info.sex from orders,user_info
+		where orders.user_id=user_info.id;
+	</select>
+
+	<select id="findUserAndItemsResultMap" resultMap="UserAndItemsResultMap">
+		SELECT orders.*,
+		user_info.name,
+		user_info.address,
+		user_info.email,
+		user_info.sex,
+		orderdetail.items_id,
+		orderdetail.orders_id,
+		orderdetail.id as orderdetail_id,
+		orderdetail.item_num,
+		items.name as items_name,
+		items.id as items_id,
+		items.detail as items_detail,
+		items.price as items_price
+		from orders,user_info,orderdetail,items
+		where orders.user_id=user_info.id
+		and orders.id=orderdetail.orders_id and items.id=orderdetail.items_id
+	</select>
+
+	<!-- 延时加载 -->
+	<select id="findOrdresUserLazyLoading" resultMap="OrdresUserLazyLoading">
+		SELECT * FROM orders
+	</select>
+</mapper>

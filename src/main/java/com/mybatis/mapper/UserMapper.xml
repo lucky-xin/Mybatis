@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mybatis.mapper.UserMapper">
+
+    <!--开启本mapper的namespace的二级缓存 -->
+    <cache />
+    <sql id="query_user_where">
+        <if test="userCustom!=null">
+            <if test="userCustom.sex!=null and userCustom.sex!=''">
+                and sex=#{userCustom.sex}
+            </if>
+        </if>
+
+        <if test="userCustom.name!=null and userCustom.name!=''">
+            and name like '%${userCustom.name}%'
+        </if>
+    </sql>
+    <!-- collection：集合属性 item：每个遍历生成对象 open:开始遍历拼接串 close:结束遍历拼接串 separator:遍历两个对象中间要拼接的串 -->
+    <sql id="foreach">
+        <if test="ids!=null and ids.size>0">
+            <foreach collection="ids" item="id" open="AND id in(" close=")" separator=",">
+                #{id}
+            </foreach>
+
+        </if>
+
+    </sql>
+
+    <resultMap type="com.ssm.po.User" id="userResultMap">
+        <id column="id_" property="id"/>
+        <result column="username_" property="name"/>
+        <result column="birthday_" property="birth"/>
+    </resultMap>
+
+    <!-- 传递hashmap综合查询用户信息 -->
+    <select id="findUserByHashMap" parameterType="hashmap" resultType="com.ssm.po.User">
+		select * from user_info where id=#{id} and name like '%${username}%'
+	</select>
+
+    <select id="findUserList" parameterType="UserQueryVo" resultType="com.ssm.po.UserCustom">
+        select *from user_info
+        <where>
+            <include refid="foreach"></include>
+            <include refid="query_user_where"></include>
+        </where>
+    </select>
+
+    <select id="findUserCount" parameterType="UserQueryVo" resultType="int">
+		select count(*) from user_info where sex=#{userCustom.sex} and name like '%${userCustom.name}%'
+	</select>
+
+    <select id="findUserByResultMap" parameterType="int" resultMap="userResultMap">
+		select id as id_, name as username_,birth as birthday_ from user_info where id=#{value}
+	</select>
+
+    <select id="findUserById" parameterType="int" resultType="com.ssm.po.User">
+		select * from user_info where id=#{id}
+	</select>
+
+    <select id="findUserByName" parameterType="String" resultType="com.ssm.po.User">
+		select * from user_info where name like '%${value}%'
+	</select>
+
+    <insert id="insertUser" parameterType="User">
+		insert into user_info(name,password,email,birth,address,sex)
+		values(#{name},#{password},#{email},#{birth},#{address},#{sex})
+	</insert>
+
+    <delete id="deleteUser" parameterType="int">
+		delete from user_info where id=#{id};
+	</delete>
+
+    <update id="updateUser" parameterType="User">
+		update user_info set sex=#{sex},name=#{name},birth=#{birth},address=#{address},password=#{password} ,email=#{email} where id=#{id}
+	</update>
+</mapper>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.mybatis.mapper.UserMapper">
+	<select id="findUserById" parameterType="int" resultType="user">
+		select *from user_info where id=#{id}
+	</select>
+	<select id="findUserByName" parameterType="String" resultType="user">
+		select *from info where name like '%${value}%'
+	</select>
+	<insert id="insertUser" parameterType="user">
+		insert into user_info(name,password,email,birth,address,sex)
+		values(#{name},#{password},#{email},#{birth},#{address},#{sex})
+	</insert>
+
+	<delete id="deleteUser" parameterType="int">
+		delete from user_info where id=#{id};
+	</delete>
+
+	<update id="updateUser" parameterType="user">
+		update user_tbl set sex=#{sex},name=#{name},birth=#{birth},address=#{address},password=#{password} ,email=#{email} where id=#{id}
+	</update>
+</mapper>
